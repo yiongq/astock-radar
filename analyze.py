@@ -27,7 +27,7 @@ def load():
     spot = pd.read_csv(f"{IN}/spot.csv", dtype={"代码": str})
     spot["代码"] = norm_code(spot["代码"])
     tables = {"spot": spot}
-    for name in ["yjyg", "yjkb", "yjbb_latest", "yjbb_base", "stock_industry_map", "industry_boards", "indices"]:
+    for name in ["yjyg", "yjkb", "yjbb_latest", "yjbb_base", "stock_industry_map", "industry_boards", "klines", "indices"]:
         path = f"{IN}/{name}.csv"
         if os.path.exists(path):
             df = pd.read_csv(path)
@@ -48,18 +48,23 @@ def build_universe(t):
     df = df[df["代码"].str.match(r"^(60|00|30|68)")]
     # 排除 ST / 退市 / 新股（无60日涨跌幅视为上市未满）
     df = df[~df["名称"].astype(str).str.contains("ST|退", na=False)]
-    df = df[~df["名称"].astype(str).str.match(r"^[NCU]\s")]
-    df = df[pd.to_numeric(df["60日涨跌幅"], errors="coerce").notna()]
+    df = df[~df["名称"].astype(str).str.match(r"^[NCU]")]
     # 流动性门槛：当日成交额 >= 3000万 且 流通市值 >= 20亿
     df["成交额"] = pd.to_numeric(df["成交额"], errors="coerce")
     df["流通市值"] = pd.to_numeric(df["流通市值"], errors="coerce")
     df = df[(df["成交额"] >= 3e7) & (df["流通市值"] >= 2e9)]
     for c in ["最新价", "涨跌幅", "换手率", "市盈率-动态", "市净率", "量比", "60日涨跌幅", "年初至今涨跌幅", "总市值"]:
-        df[c] = pd.to_numeric(df[c], errors="coerce")
+        df[c] = pd.to_numeric(df[c], errors="coerce") if c in df.columns else np.nan
     return df
 
 
 def merge_fundamentals(df, t):
+    # 60日动量（腾讯K线子集）
+    if "klines" in t:
+        k = t["klines"].copy()
+        k["代码"] = k["代码"].astype(str).str.zfill(6)
+        df = df.drop(columns=[c for c in ["60日涨跌幅", "20日涨跌幅", "距60日高点"] if c in df.columns])
+        df = df.merge(k.drop_duplicates("代码"), on="代码", how="left")
     # 行业映射
     if "stock_industry_map" in t:
         df = df.merge(t["stock_industry_map"].rename(columns={"代码": "代码"}), on="代码", how="left")
@@ -133,12 +138,15 @@ def score(df):
     df["催化分"] = (c_yg.combine_first(c_kb).combine_first(c_grow * 0.6)).fillna(0) * 100
 
     # ---------- 左侧位置 20（未被市场充分定价）----------
-    m60 = df["60日涨跌幅"]
+    m60 = pd.to_numeric(df["60日涨跌幅"], errors="coerce")
     pos = pd.Series(0.5, index=df.index)
     pos = pos.where(~m60.between(-30, 5), 1.0)     # 真左侧：近60日横盘或回调
     pos = pos.where(~m60.between(5, 20), 0.65)     # 温和启动
     pos = pos.where(~(m60 > 40), 0.1)              # 已拥挤
     pos = pos.where(~(m60 < -45), 0.25)            # 深跌需警惕基本面恶化
+    pos = pos.where(m60.notna(), 0.5)              # 无K线数据 → 中性
+    dd = pd.to_numeric(df.get("距60日高点"), errors="coerce")
+    pos = pos + dd.between(-25, -8).fillna(False) * 0.1   # 距高点有折让加分
     heat = winsor_score(df["换手率"], 15, 30)       # 过热惩罚
     df["左侧分"] = (pos - heat * 0.3).clip(0, 1) * 100
 
@@ -199,7 +207,7 @@ def main():
 
     keep = ["代码", "名称", "行业", "评级", "总分", "质量分", "估值分", "催化分", "左侧分",
             "最新价", "涨跌幅", "60日涨跌幅", "年初至今涨跌幅", "市盈率-动态", "市净率",
-            "ROE", "净利同比", "营收同比", "毛利率", "预告类型", "预告变动幅度",
+            "ROE", "净利同比", "营收同比", "毛利率", "预告类型", "预告变动幅度", "距60日高点", "20日涨跌幅",
             "快报净利同比", "换手率", "流通市值", "红旗"]
     keep = [c for c in keep if c in df.columns]
     df[keep].to_csv(f"{OUT}/candidates.csv", index=False)
@@ -211,12 +219,12 @@ def main():
         "counts": picks["评级"].value_counts().to_dict(),
         "picks": json.loads(picks.head(40).to_json(orient="records", force_ascii=False)),
     }
-    # 行业板块概览
-    if "industry_boards" in t:
-        b = t["industry_boards"]
-        b["涨跌幅"] = pd.to_numeric(b["涨跌幅"], errors="coerce")
-        summary["board_top"] = json.loads(b.nlargest(5, "涨跌幅")[["板块名称", "涨跌幅", "领涨股票"]].to_json(orient="records", force_ascii=False))
-        summary["board_bottom"] = json.loads(b.nsmallest(5, "涨跌幅")[["板块名称", "涨跌幅"]].to_json(orient="records", force_ascii=False))
+    # 行业概览（用自有数据按行业聚合）
+    if df["行业"].notna().any():
+        g = df.groupby("行业").agg(涨跌幅=("涨跌幅", "mean"), 家数=("代码", "count"))
+        g = g[g["家数"] >= 5].round(2).reset_index()
+        summary["board_top"] = json.loads(g.nlargest(5, "涨跌幅").to_json(orient="records", force_ascii=False))
+        summary["board_bottom"] = json.loads(g.nsmallest(5, "涨跌幅").to_json(orient="records", force_ascii=False))
     with open(f"{OUT}/report_data.json", "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
     print(f"universe={n_universe}  picks={summary['counts']}")
