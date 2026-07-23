@@ -1,0 +1,38 @@
+name: fetch-astock-data
+
+on:
+  schedule:
+    - cron: "30 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "run even on non-trading days"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Fetch data
+        env:
+          FORCE_RUN: ${{ github.event.inputs.force || '0' }}
+        run: python fetch_data.py
+      - name: Commit and push
+        run: |
+          git config user.name "data-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && echo "no changes" && exit 0
+          git commit -m "data update"
+          git push
