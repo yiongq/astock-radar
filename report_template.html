@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A股每日选股雷达 · {{DATE}}</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --line:#262b36; --txt:#e8eaf0; --muted:#9aa3b2;
+    --up:#e5484d; --down:#30a46c; --accent:#5b8def; --gold:#d4a843;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f7f9; --card:#ffffff; --line:#e4e7ec; --txt:#1a1d24; --muted:#667085; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font:15px/1.65 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:32px 16px;}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:16px}
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--accent);letter-spacing:.5px}
+  .conclusion{font-size:16px;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{color:var(--muted);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;padding:1px 8px;border-radius:6px;font-size:12px;font-weight:600}
+  .g1{background:rgba(212,168,67,.15);color:var(--gold);border:1px solid var(--gold)}
+  .g2{background:rgba(91,141,239,.12);color:var(--accent);border:1px solid var(--accent)}
+  .g3{background:rgba(154,163,178,.12);color:var(--muted);border:1px solid var(--muted)}
+  .up{color:var(--up)} .down{color:var(--down)}
+  .muted{color:var(--muted);font-size:12.5px}
+  .flag{color:var(--up);font-size:12.5px}
+  .factor{display:inline-block;min-width:70px}
+  .disclaimer{color:var(--muted);font-size:12px;margin-top:24px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>A股每日选股雷达</h1>
+  <div class="sub">信息截止：北京时间 {{DATETIME}} ｜ 初筛池 {{UNIVERSE}} 只 ｜ 数据：公开渠道（东方财富等）</div>
+
+  <div class="card">
+    <h2>结论</h2>
+    <div class="conclusion">{{CONCLUSION}}</div>
+  </div>
+
+  <div class="card">
+    <h2>宏观与市场</h2>
+    {{MACRO}}
+  </div>
+
+  <div class="card">
+    <h2>候选名单</h2>
+    <table>
+      <tr><th>优先级</th><th>股票</th><th>评级</th><th>前瞻逻辑</th><th>目前缺口 / 风险</th></tr>
+      {{PICK_ROWS}}
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>因子明细</h2>
+    <table>
+      <tr><th>股票</th><th>总分</th><th>质量</th><th>估值</th><th>催化</th><th>左侧</th><th>PE / PB</th><th>ROE</th><th>净利同比</th><th>60日涨幅</th></tr>
+      {{FACTOR_ROWS}}
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>行业板块（当日）</h2>
+    {{BOARDS}}
+  </div>
+
+  <div class="disclaimer">
+    免责声明：本报告由自动化程序（量化初筛 + AI 研究验证）生成，仅供个人研究参考，不构成任何投资建议。
+    数据来自公开渠道，可能存在延迟、缺失或错误；股市有风险，决策需独立判断，盈亏自负。
+  </div>
+</div>
+</body>
+</html>
