@@ -3,29 +3,39 @@ name: probe-sources
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
       - name: Probe data sources
         run: |
           probe() {
             code=$(curl -s -o /tmp/out -w "%{http_code}" --max-time 15 -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" "$2" -H "Referer: $3" || echo "ERR")
             size=$(wc -c < /tmp/out 2>/dev/null || echo 0)
-            echo "PROBE $1 => http=$code bytes=$size"
-            head -c 200 /tmp/out; echo ""
+            echo "PROBE $1 => http=$code bytes=$size" >> probe_results.txt
+            head -c 150 /tmp/out >> probe_results.txt || true; echo "" >> probe_results.txt
           }
+          echo "probe run $(date -u)" > probe_results.txt
           probe em_push2 "https://82.push2.eastmoney.com/api/qt/clist/get?pn=1&pz=3&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:1+t:2&fields=f2,f3,f12,f14" ""
-          probe em_datacenter "https://datacenter-web.eastmoney.com/api/data/v1/get?sortColumns=NOTICE_DATE&sortTypes=-1&pageSize=3&pageNumber=1&reportName=RPT_PUBLIC_OP_NEWPREDICT&columns=ALL&filter=(REPORT_DATE='2026-06-30')" ""
+          probe em_datacenter "https://datacenter-web.eastmoney.com/api/data/v1/get?sortColumns=NOTICE_DATE&sortTypes=-1&pageSize=3&pageNumber=1&reportName=RPT_PUBLIC_OP_NEWPREDICT&columns=ALL" ""
           probe tencent_qt "https://qt.gtimg.cn/q=sh600519,sz000001" "https://gu.qq.com/"
           probe tencent_ifzq "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sh600519,day,,,10,qfq" "https://gu.qq.com/"
           probe sina_hq "https://hq.sinajs.cn/list=sh600519,sz000001" "https://finance.sina.com.cn/"
           probe sina_market "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/Market_Center.getHQNodeData?page=1&num=5&sort=symbol&asc=1&node=hs_a" "https://finance.sina.com.cn/"
-          probe sina_yjyg "https://vip.stock.finance.sina.com.cn/q/go.php/vFinanceAnalyze/kind/performance/index.phtml?s_i=&s_a=&s_c=&s_type=&reportdate=2026&quarter=2&p=1&num=5" "https://finance.sina.com.cn/"
-          probe ths_iwencai "https://d.10jqka.com.cn/v6/line/hs_600519/01/last.js" "https://www.10jqka.com.cn/"
-          probe legulegu "https://legulegu.com/stockdata/market-activity" ""
+          probe sina_yjyg "https://vip.stock.finance.sina.com.cn/q/go.php/vFinanceAnalyze/kind/performance/index.phtml?p=1" "https://finance.sina.com.cn/"
+          probe ths_d10 "https://d.10jqka.com.cn/v6/line/hs_600519/01/last.js" "https://www.10jqka.com.cn/"
           probe em_push2_alt "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=3&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:1+t:2&fields=f2,f3,f12,f14" "https://quote.eastmoney.com/"
-          probe em_quote "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600519&fields1=f1&fields2=f51,f53&klt=101&fqt=1&end=20500101&lmt=5" "https://quote.eastmoney.com/"
-          probe baostock_web "http://www.baostock.com" ""
-          echo "ALL PROBES DONE"
+          probe em_kline "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600519&fields1=f1&fields2=f51,f53&klt=101&fqt=1&end=20500101&lmt=5" "https://quote.eastmoney.com/"
+          cat probe_results.txt
+      - name: Commit results
+        run: |
+          git config user.name "probe-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add probe_results.txt
+          git commit -m "probe results" || exit 0
+          git push
