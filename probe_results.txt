@@ -1,0 +1,34 @@
+probe run Thu Jul 23 08:45:31 UTC 2026
+PROBE em_push2 => http=302 bytes=0
+
+PROBE em_datacenter => http=200 bytes=4994
+{"version":"e753f9a797752331e9356658af52ddbd","result":{"pages":63522,"data":[{"SECUCODE":"688779.SH","SECURITY_CODE":"688779","SECURITY_NAME_ABBR":"ä
+PROBE tencent_qt => http=200 bytes=1077
+v_sh600519="1~¹óÖÝÃ©Ì¨~600519~1292.01~1305.00~1299.80~33918~18277~15641~1292.01~9~1292.00~111~1291.87~1~1291.80~1~1291.39~1~1293.00~6~1296.18~1~1297.0
+PROBE tencent_ifzq => http=200 bytes=2439
+{"code":0,"msg":"","data":{"sh600519":{"qfqday":[["2026-07-09","1191.000","1182.190","1191.990","1178.000","34096.000"],["2026-07-10","1182.200","1204
+PROBE sina_hq => http=200 bytes=580
+var hq_str_sh600519="¹óÖÝÃ©Ì¨,1299.800,1305.000,1292.010,1303.000,1285.430,1292.010,1293.000,3391769,4392505599.000,854,1292.010,11100,1292.000,100,12
+PROBE sina_market => http=200 bytes=1854
+[{"symbol":"bj920000","code":"920000","name":"\u5b89\u5fbd\u51e4\u51f0","trade":"13.200","pricechange":1.61,"changepercent":13.891,"buy":"13.180","sel
+PROBE sina_yjyg => http=200 bytes=77244
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.
+PROBE ths_d10 => http=200 bytes=10914
+quotebridge_v6_line_hs_600519_01_last({"rt":"0930-1130,1300-1500","total":"5966","start":"20010827","num":140,"year":{"2001":86,"2002":234,"2003":239,
+PROBE em_push2_alt => http=502 bytes=157
+<html>
+<head><title>502 Bad Gateway</title></head>
+<body>
+<center><h1>502 Bad Gateway</h1></center>
+<hr><center>nginx/1.26.2</center>
+</body>
+</
+PROBE em_kline => http=000ERR bytes=157
+<html>
+<head><title>502 Bad Gateway</title></head>
+<body>
+<center><h1>502 Bad Gateway</h1></center>
+<hr><center>nginx/1.26.2</center>
+</body>
+</
