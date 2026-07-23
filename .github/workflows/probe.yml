@@ -11,9 +11,9 @@ jobs:
       - name: Probe data sources
         run: |
           probe() {
-            code=\$(curl -s -o /tmp/out -w "%{http_code}" --max-time 15 -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" "\$2" -H "Referer: \$3" || echo "ERR")
-            size=\$(wc -c < /tmp/out 2>/dev/null || echo 0)
-            echo "PROBE \$1 => http=\$code bytes=\$size"
+            code=$(curl -s -o /tmp/out -w "%{http_code}" --max-time 15 -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" "$2" -H "Referer: $3" || echo "ERR")
+            size=$(wc -c < /tmp/out 2>/dev/null || echo 0)
+            echo "PROBE $1 => http=$code bytes=$size"
             head -c 200 /tmp/out; echo ""
           }
           probe em_push2 "https://82.push2.eastmoney.com/api/qt/clist/get?pn=1&pz=3&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:1+t:2&fields=f2,f3,f12,f14" ""
