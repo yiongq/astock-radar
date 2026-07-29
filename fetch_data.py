@@ -173,7 +173,7 @@ def fetch_period_table(fn, periods, name):
 # ---------- 指数（腾讯） ----------
 def fetch_indices():
     frames = []
-    for sym, label in [("sh000001", "上证指数"), ("sz399001", "深证成指"), ("sz399006", "创业板指")]:
+    for sym, label in [("sh000001", "上证指数"), ("sz399001", "深证成指"), ("sz399006", "创业板指"), ("sh000300", "沪深300")]:
         try:
             url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={sym},day,,,260,"
             j = requests.get(url, headers=T_HEAD, timeout=15).json()
