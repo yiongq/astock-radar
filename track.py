@@ -85,6 +85,13 @@ def main():
                 continue
             code = norm_code(p["代码"])
             if (trade_date, code) in existing:
+                # 同一交易日重复运行：刷新入选价/基准收盘（修复盘前运行留下的旧价）
+                m = (rec["登记日"].astype(str) == trade_date) & (rec["代码"] == code)
+                rec.loc[m, "入选价"] = float(p["最新价"])
+                rec.loc[m, "评级"] = p.get("评级")
+                rec.loc[m, "总分"] = p.get("总分")
+                if bench.get(trade_date):
+                    rec.loc[m, "基准收盘"] = bench[trade_date]
                 continue
             rec = pd.concat([rec, pd.DataFrame([{
                 "登记日": trade_date, "代码": code, "名称": p.get("名称"),
@@ -94,6 +101,12 @@ def main():
                 "状态": "跟踪中",
             }])], ignore_index=True)
             n_new += 1
+
+    # ---------- 1.5) 基准收盘缺失回填（登记时指数数据未到位的情况）----------
+    for i, r in rec.iterrows():
+        if str(r.get("基准收盘", "")) in ("", "nan") and str(r["登记日"]) in bench:
+            rec.at[i, "基准收盘"] = bench[str(r["登记日"])]
+            rec.at[i, "基准"] = bench_name
 
     # ---------- 2) 回填 T+N ----------
     dates = hist_dates()
