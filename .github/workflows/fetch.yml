@@ -28,11 +28,16 @@ jobs:
         env:
           FORCE_RUN: ${{ github.event.inputs.force || '0' }}
         run: python fetch_data.py
+      - name: Analyze, plan and track
+        run: |
+          python analyze.py
+          python plan.py
+          python track.py
       - name: Commit and push
         run: |
           git config user.name "data-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add data/
+          git add data/ output/
           git diff --cached --quiet && echo "no changes" && exit 0
           git commit -m "data update"
           git push
