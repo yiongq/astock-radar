@@ -32,10 +32,3 @@ jobs:
           probe em_push2_alt "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=3&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:1+t:2&fields=f2,f3,f12,f14" "https://quote.eastmoney.com/"
           probe em_kline "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600519&fields1=f1&fields2=f51,f53&klt=101&fqt=1&end=20500101&lmt=5" "https://quote.eastmoney.com/"
           cat probe_results.txt
-      - name: Commit results
-        run: |
-          git config user.name "probe-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add probe_results.txt
-          git commit -m "probe results" || exit 0
-          git push
