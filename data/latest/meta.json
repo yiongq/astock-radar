@@ -1,8 +1,8 @@
 {
-  "trade_date": "2026-11-03",
-  "fetched_at": "2026-11-03T03:38:17.030165+08:00",
+  "trade_date": "2026-11-04",
+  "fetched_at": "2026-11-04T01:11:00.176237+08:00",
   "tables": {
-    "spot": 5576,
+    "spot": 5577,
     "yjyg": {
       "rows": 534,
       "period": "20260930"
@@ -12,13 +12,13 @@
       "period": "20260930"
     },
     "yjbb_latest": {
-      "rows": 5763,
+      "rows": 5766,
       "period": "20260930"
     },
     "yjbb_base": {
       "rows": 11435,
       "period": "20260630"
     },
-    "klines": 198
+    "klines": 261
   }
 }
